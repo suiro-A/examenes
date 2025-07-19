@@ -200,7 +200,7 @@ const handleImport = (event) => {
                 gap:10,
                 position:'relative'
               }}>
-                <div style={{fontWeight:600, fontSize:'1.1em', marginBottom:6}}>{exam.name}</div>
+                <div style={{fontWeight:600, fontSize:'1.1em', marginBottom:6, color:'#fff'}}>{exam.name}</div>
                 <div style={{display:'flex', gap:8}}>
                   <button onClick={() => handleSelectExam(exam)} style={{background:'#646cff', color:'#fff'}}>Rendir</button>
                   {/* <button onClick={() => handleEditExam(idx)} style={{background:'#ffa500', color:'#222'}}>Editar</button> */}
