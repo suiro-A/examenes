@@ -90,12 +90,13 @@ textarea:focus, input[type="text"]:focus {
   outline: none;
 }
 .question-block {
-  background: #e3f0ff;
+  background: #23242a;
   border-radius: 12px;
   box-shadow: 0 2px 12px #b6d0f7aa;
   padding: 1.5em 1em 1em 1em;
   margin-bottom: 1.5em;
   border: none;
+  color: #f8fbff; /* <-- texto claro */
 }
 .alternatives {
   display: flex;
@@ -104,7 +105,8 @@ textarea:focus, input[type="text"]:focus {
   margin: 1em 0 0.5em 0;
 }
 .alternatives label {
-  background: #f0f6ff;
+  background: #23242a;
+  color: #f8fbff; /* <-- texto claro */
   border-radius: 8px;
   padding: 0.5em 1em;
   margin: 0;
