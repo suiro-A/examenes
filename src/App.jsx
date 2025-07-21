@@ -44,10 +44,21 @@ function App() {
   const [selectedExam, setSelectedExam] = useState(null);
   const [userAnswers, setUserAnswers] = useState([]);
   const [result, setResult] = useState(null);
+  const [shuffleEnabled, setShuffleEnabled] = useState(false);
+  const [numberInput, setNumberInput] = useState('');
+  const [numberedOutput, setNumberedOutput] = useState('');
 
   const handleCreateExam = () => {
-    const questions = parseQuestions(questionsText);
-    const keys = parseKeys(keysText, questions.length);
+    let questions = parseQuestions(questionsText);
+    let keys = parseKeys(keysText, questions.length);
+
+    if (shuffleEnabled) {
+      // Mezcla preguntas, alternativas y ajusta claves
+      const shuffled = shuffleQuestionsAndAlternatives(questions, keys);
+      questions = shuffled.questions;
+      keys = shuffled.keys;
+    }
+
     const valid = questions.length > 0 && keys.length === questions.length && keys.every(k => k.key);
     if (!valid) {
       return alert('Verifica que las preguntas y claves estén en el formato correcto.');
@@ -139,12 +150,70 @@ const handleImport = (event) => {
   reader.readAsText(file);
 };
 
+  const handleNumberQuestions = () => {
+    // Divide por doble salto de línea o línea vacía
+    const blocks = numberInput
+      .split(/\n\s*\n/) // separa por líneas vacías
+      .map(b => b.trim())
+      .filter(Boolean);
+
+    let result = '';
+    let count = 1;
+    blocks.forEach(block => {
+      if (block) {
+        result += `${count}. ${block}\n`;
+        count++;
+      }
+    });
+    setNumberedOutput(result.trim());
+  };
+
+  function shuffleQuestionsAndAlternatives(questions, keys) {
+  // Une preguntas y claves
+  let pairs = questions.map((q, i) => ({ question: q, key: keys[i] }));
+  // Mezcla las preguntas
+  for (let i = pairs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+  }
+  // Mezcla alternativas y ajusta claves para cada pregunta
+  pairs = pairs.map(({ question, key }) => {
+    // Mezcla alternativas
+    let alternatives = [...question.alternatives];
+    for (let j = alternatives.length - 1; j > 0; j--) {
+      const k = Math.floor(Math.random() * (j + 1));
+      [alternatives[j], alternatives[k]] = [alternatives[k], alternatives[j]];
+    }
+    // Reasigna letras
+    alternatives = alternatives.map((a, idx) => ({
+      ...a,
+      letter: String.fromCharCode(97 + idx)
+    }));
+    // Busca la nueva letra de la alternativa correcta
+    const correctText = question.alternatives.find(a => a.letter === key.key)?.text;
+    const newKeyObj = alternatives.find(a => a.text === correctText);
+    return {
+      question: {
+        ...question,
+        alternatives
+      },
+      key: { key: newKeyObj?.letter || '' }
+    };
+  });
+  // Devuelve preguntas y claves separadas
+  return {
+    questions: pairs.map(p => p.question),
+    keys: pairs.map(p => p.key)
+  };
+}
+
   return (
     <div className="container">
       <h1>Gestor de Exámenes</h1>
       <nav style={{ marginBottom: 20 }}>
         <button onClick={() => setView('home')}>Crear examen</button>
         <button onClick={() => setView('list')}>Lista de exámenes</button>
+        <button onClick={() => setView('numerar')}>Numerar preguntas</button>
       </nav>
 
       {view === 'home' && (
@@ -171,6 +240,17 @@ const handleImport = (event) => {
             onChange={e => setKeysText(e.target.value)}
             style={{ width: '100%', marginBottom: 8 }}
           />
+          <div style={{ marginBottom: 12 }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={shuffleEnabled}
+                onChange={e => setShuffleEnabled(e.target.checked)}
+                style={{ marginRight: 8 }}
+              />
+              Entremezclar alternativas y claves
+            </label>
+          </div>
           <button onClick={handleCreateExam}>Guardar examen</button>
         </div>
       )}
@@ -236,11 +316,11 @@ const handleImport = (event) => {
                     <div style={{fontWeight:'bold', fontSize:'1.15em', marginBottom:8}}>
                       {idx + 1}. {q.question}
                     </div>
-                    <div className="alternatives-vertical" style={{display:'flex', flexDirection:'column', gap:10}}>
+                    <div className="alternatives-vertical" style={{display:'flex', flexDirection:'column', gap:10, alignItems:'flex-start', width:'100%'}}>
                       {q.alternatives.map(alt => {
-                        let style = {};
-                        if (alt.letter === correctKey) style = {background:'#2e8b57', color:'#fff', fontWeight:600};
-                        if (userAns === alt.letter && userAns !== correctKey) style = {background:'#b22222', color:'#fff', fontWeight:600};
+                        let style = { width: '100%', textAlign: 'left' };
+                        if (alt.letter === correctKey) style = { ...style, background:'#2e8b57', color:'#fff', fontWeight:600 };
+                        if (userAns === alt.letter && userAns !== correctKey) style = { ...style, background:'#b22222', color:'#fff', fontWeight:600 };
                         return (
                           <div key={alt.letter} style={{...style, borderRadius:6, padding:'6px 12px'}}>
                             <span style={{fontWeight:500}}>{alt.letter})</span> {alt.text}
@@ -256,10 +336,35 @@ const handleImport = (event) => {
               <div style={{ marginTop: 20 }}>
                 <b>Resultado: {result.correct} de {result.total} correctas</b>
                 <br />
+                <b>
+                  Nota: {((result.correct / result.total) * 20).toFixed(2)} / 20
+                </b>
+                <br />
                 <button type="button" onClick={() => setView('list')}>Volver a la lista</button>
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {view === 'numerar' && (
+        <div className="number-section">
+          <h2>Numerar preguntas</h2>
+          <textarea
+            rows={8}
+            placeholder="Pega aquí tus preguntas y alternativas (sin numerar)"
+            value={numberInput}
+            onChange={e => setNumberInput(e.target.value)}
+            style={{ width: '100%', marginBottom: 8 }}
+          />
+          <button onClick={handleNumberQuestions}>Numerar</button>
+          <textarea
+            rows={8}
+            placeholder="Aquí aparecerán las preguntas numeradas"
+            value={numberedOutput}
+            readOnly
+            style={{ width: '100%', marginTop: 12 }}
+          />
         </div>
       )}
     </div>

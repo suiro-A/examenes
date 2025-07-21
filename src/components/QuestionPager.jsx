@@ -21,8 +21,8 @@ function QuestionPager({ questions, userAnswers, onAnswer, result, onSubmit }) {
         display: "flex",
         flexDirection: "column",
         gap: 12,
-        margin: "0 auto",
-        maxWidth: 500
+        alignItems: "flex-start", // <-- alineación a la izquierda
+        width: "100%"            // <-- ocupar todo el ancho
       }}>
         {q.alternatives.map(alt => (
           <label
@@ -33,7 +33,12 @@ function QuestionPager({ questions, userAnswers, onAnswer, result, onSubmit }) {
               borderRadius: 8,
               padding: "8px 12px",
               cursor: result ? "default" : "pointer",
-              border: "1px solid #23272f"
+              border: "1px solid #23272f",
+              width: "100%",           // <-- ocupar todo el ancho
+              textAlign: "left",       // <-- texto a la izquierda
+              justifyContent: "flex-start", // <-- alinear contenido a la izquierda
+              display: "flex",         // <-- para que el radio y texto estén alineados
+              alignItems: "center"     // <-- verticalmente centrado
             }}
           >
             <input
