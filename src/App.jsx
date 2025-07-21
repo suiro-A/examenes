@@ -47,6 +47,7 @@ function App() {
   const [shuffleEnabled, setShuffleEnabled] = useState(false);
   const [numberInput, setNumberInput] = useState('');
   const [numberedOutput, setNumberedOutput] = useState('');
+  const [numToSolve, setNumToSolve] = useState('');
 
   const handleCreateExam = () => {
     let questions = parseQuestions(questionsText);
@@ -69,9 +70,25 @@ function App() {
     setView('list');
   };
 
-  const handleSelectExam = (exam) => {
-    setSelectedExam(exam);
-    setUserAnswers(Array(exam.questions.length).fill(''));
+  const handleSelectExam = (exam, numToSolve) => {
+    let questions = exam.questions;
+    let keys = exam.keys;
+    let n = parseInt(numToSolve, 10);
+
+    if (n > 0 && n < questions.length) {
+      // Selecciona aleatoriamente n preguntas
+      const indices = Array.from({length: questions.length}, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      const selectedIndices = indices.slice(0, n);
+      questions = selectedIndices.map(i => exam.questions[i]);
+      keys = selectedIndices.map(i => exam.keys[i]);
+    }
+
+    setSelectedExam({ ...exam, questions, keys });
+    setUserAnswers(Array(questions.length).fill(''));
     setResult(null);
     setView('take');
   };
@@ -282,8 +299,21 @@ const handleImport = (event) => {
               }}>
                 <div style={{fontWeight:600, fontSize:'1.1em', marginBottom:6, color:'#fff'}}>{exam.name}</div>
                 <div style={{display:'flex', gap:8}}>
-                  <button onClick={() => handleSelectExam(exam)} style={{background:'#646cff', color:'#fff'}}>Rendir</button>
-                  {/* <button onClick={() => handleEditExam(idx)} style={{background:'#ffa500', color:'#222'}}>Editar</button> */}
+                  <button
+                    onClick={() => {
+                      const max = exam.questions.length;
+                      let n = window.prompt(`¿Cuántas preguntas quieres resolver? (1-${max})`, max);
+                      n = parseInt(n, 10);
+                      if (isNaN(n) || n < 1 || n > max) {
+                        alert('Cantidad inválida.');
+                        return;
+                      }
+                      handleSelectExam(exam, n);
+                    }}
+                    style={{background:'#646cff', color:'#fff'}}
+                  >
+                    Rendir
+                  </button>
                   <button onClick={() => handleDeleteExam(idx)} style={{background:'#b22222', color:'#fff'}}>Eliminar</button>
                 </div>
               </div>
